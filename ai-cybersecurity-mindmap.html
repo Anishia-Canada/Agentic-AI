@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-Driven Cybersecurity Ecosystem</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
+
+  :root {
+    --bg: #030812;
+    --grid: rgba(0,200,255,0.04);
+    --center-glow: #00e5ff;
+    --c1: #ff4d6d;
+    --c2: #ffd60a;
+    --c3: #06ffa5;
+    --c4: #7b61ff;
+    --c5: #ff9a3c;
+    --c6: #00cfff;
+    --c7: #ff61b6;
+    --line: rgba(0,200,255,0.2);
+    --text: #c8e0f0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Rajdhani', sans-serif;
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* Scanline overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+  }
+
+  #scene {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  /* Center node */
+  .center-node {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, rgba(0,229,255,0.25), rgba(0,229,255,0.04));
+    border: 2px solid var(--center-glow);
+    box-shadow: 0 0 40px rgba(0,229,255,0.5), inset 0 0 30px rgba(0,229,255,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    cursor: pointer;
+    z-index: 10;
+    animation: pulse-center 3s ease-in-out infinite;
+  }
+
+  .center-node .icon { font-size: 2.2rem; line-height: 1; margin-bottom: 6px; }
+  .center-node .title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--center-glow);
+    text-transform: uppercase;
+    line-height: 1.4;
+    padding: 0 12px;
+  }
+
+  @keyframes pulse-center {
+    0%, 100% { box-shadow: 0 0 40px rgba(0,229,255,0.5), inset 0 0 30px rgba(0,229,255,0.1); }
+    50% { box-shadow: 0 0 70px rgba(0,229,255,0.8), inset 0 0 50px rgba(0,229,255,0.2); }
+  }
+
+  /* Branch nodes */
+  .branch {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    cursor: pointer;
+  }
+
+  .branch-node {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 8px;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .branch-node .b-icon { font-size: 1.6rem; margin-bottom: 4px; }
+  .branch-node .b-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.38rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1.35;
+  }
+
+  .branch:hover .branch-node { transform: scale(1.1); }
+
+  /* Color themes per branch */
+  .b1 .branch-node { background: radial-gradient(circle at 40% 35%, rgba(255,77,109,0.2), rgba(255,77,109,0.03)); border: 1.5px solid var(--c1); box-shadow: 0 0 20px rgba(255,77,109,0.35); }
+  .b1 .b-title { color: var(--c1); }
+  .b2 .branch-node { background: radial-gradient(circle at 40% 35%, rgba(255,214,10,0.2), rgba(255,214,10,0.03)); border: 1.5px solid var(--c2); box-shadow: 0 0 20px rgba(255,214,10,0.35); }
+  .b2 .b-title { color: var(--c2); }
+  .b3 .branch-node { background: radial-gradient(circle at 40% 35%, rgba(6,255,165,0.2), rgba(6,255,165,0.03)); border: 1.5px solid var(--c3); box-shadow: 0 0 20px rgba(6,255,165,0.35); }
+  .b3 .b-title { color: var(--c3); }
+  .b4 .branch-node { background: radial-gradient(circle at 40% 35%, rgba(123,97,255,0.2), rgba(123,97,255,0.03)); border: 1.5px solid var(--c4); box-shadow: 0 0 20px rgba(123,97,255,0.35); }
+  .b4 .b-title { color: var(--c4); }
+  .b5 .branch-node { background: radial-gradient(circle at 40% 35%, rgba(255,154,60,0.2), rgba(255,154,60,0.03)); border: 1.5px solid var(--c5); box-shadow: 0 0 20px rgba(255,154,60,0.35); }
+  .b5 .b-title { color: var(--c5); }
+  .b6 .branch-node { background: radial-gradient(circle at 40% 35%, rgba(0,207,255,0.2), rgba(0,207,255,0.03)); border: 1.5px solid var(--c6); box-shadow: 0 0 20px rgba(0,207,255,0.35); }
+  .b6 .b-title { color: var(--c6); }
+  .b7 .branch-node { background: radial-gradient(circle at 40% 35%, rgba(255,97,182,0.2), rgba(255,97,182,0.03)); border: 1.5px solid var(--c7); box-shadow: 0 0 20px rgba(255,97,182,0.35); }
+  .b7 .b-title { color: var(--c7); }
+
+  /* Leaf nodes */
+  .leaf {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 9;
+    width: 90px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+
+  .leaf-inner {
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.5rem;
+    line-height: 1.4;
+    transition: all 0.25s;
+  }
+
+  .leaf:hover .leaf-inner { transform: scale(1.08); }
+
+  .b1 .leaf-inner { background: rgba(255,77,109,0.08); border: 1px solid rgba(255,77,109,0.4); color: rgba(255,140,158,0.9); }
+  .b2 .leaf-inner { background: rgba(255,214,10,0.08); border: 1px solid rgba(255,214,10,0.4); color: rgba(255,230,100,0.9); }
+  .b3 .leaf-inner { background: rgba(6,255,165,0.08); border: 1px solid rgba(6,255,165,0.4); color: rgba(100,255,200,0.9); }
+  .b4 .leaf-inner { background: rgba(123,97,255,0.08); border: 1px solid rgba(123,97,255,0.4); color: rgba(180,160,255,0.9); }
+  .b5 .leaf-inner { background: rgba(255,154,60,0.08); border: 1px solid rgba(255,154,60,0.4); color: rgba(255,190,120,0.9); }
+  .b6 .leaf-inner { background: rgba(0,207,255,0.08); border: 1px solid rgba(0,207,255,0.4); color: rgba(100,225,255,0.9); }
+  .b7 .leaf-inner { background: rgba(255,97,182,0.08); border: 1px solid rgba(255,97,182,0.4); color: rgba(255,160,210,0.9); }
+
+  /* Detail panel */
+  #detail-panel {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(680px, 92vw);
+    background: rgba(3,10,22,0.92);
+    border: 1px solid rgba(0,229,255,0.25);
+    border-radius: 12px;
+    padding: 20px 28px;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    box-shadow: 0 0 40px rgba(0,229,255,0.1);
+  }
+
+  #detail-panel.visible { opacity: 1; pointer-events: all; }
+
+  #detail-panel .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding-bottom: 10px;
+  }
+
+  #detail-panel .panel-icon { font-size: 1.6rem; }
+  #detail-panel .panel-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  #detail-panel .panel-body {
+    font-size: 0.78rem;
+    line-height: 1.65;
+    color: rgba(200,224,240,0.8);
+  }
+
+  #detail-panel .panel-body ul { padding-left: 14px; }
+  #detail-panel .panel-body li { margin-bottom: 4px; }
+  #detail-panel .panel-body strong { color: rgba(200,224,240,1); font-weight: 600; }
+
+  #close-btn {
+    position: absolute;
+    top: 12px; right: 16px;
+    background: none;
+    border: none;
+    color: rgba(200,224,240,0.5);
+    font-size: 1rem;
+    cursor: pointer;
+    font-family: 'Share Tech Mono', monospace;
+  }
+  #close-btn:hover { color: white; }
+
+  /* Title */
+  #map-title {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Orbitron', monospace;
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.3em;
+    color: rgba(0,229,255,0.7);
+    text-transform: uppercase;
+    z-index: 100;
+    white-space: nowrap;
+  }
+
+  #hint {
+    position: fixed;
+    bottom: 12px;
+    right: 20px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.5rem;
+    color: rgba(200,224,240,0.2);
+    z-index: 100;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<div id="map-title">AI-Driven Cybersecurity Ecosystem</div>
+<div id="hint">click nodes to explore</div>
+
+<div id="scene">
+  <svg id="lines-svg" style="position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;"></svg>
+
+  <!-- CENTER -->
+  <div class="center-node" id="center" onclick="showDetail('center')">
+    <div class="icon">🧠</div>
+    <div class="title">AI-Driven<br>Cybersecurity<br>Ecosystem</div>
+  </div>
+
+  <!-- BRANCHES (positioned by JS) -->
+  <div class="branch b1" id="b1" onclick="showDetail('b1')">
+    <div class="branch-node">
+      <div class="b-icon">🛡️</div>
+      <div class="b-title">App Security &amp;<br>Secure Dev</div>
+    </div>
+  </div>
+
+  <div class="branch b2" id="b2" onclick="showDetail('b2')">
+    <div class="branch-node">
+      <div class="b-icon">🎯</div>
+      <div class="b-title">Threat Hunting<br>&amp; Detection</div>
+    </div>
+  </div>
+
+  <div class="branch b3" id="b3" onclick="showDetail('b3')">
+    <div class="branch-node">
+      <div class="b-icon">🚨</div>
+      <div class="b-title">Incident<br>Response</div>
+    </div>
+  </div>
+
+  <div class="branch b4" id="b4" onclick="showDetail('b4')">
+    <div class="branch-node">
+      <div class="b-icon">🔐</div>
+      <div class="b-title">Identity &amp;<br>Access (IAM)</div>
+    </div>
+  </div>
+
+  <div class="branch b5" id="b5" onclick="showDetail('b5')">
+    <div class="branch-node">
+      <div class="b-icon">🏗️</div>
+      <div class="b-title">Infrastructure<br>&amp; Hardware</div>
+    </div>
+  </div>
+
+  <div class="branch b6" id="b6" onclick="showDetail('b6')">
+    <div class="branch-node">
+      <div class="b-icon">🦾</div>
+      <div class="b-title">Cyber-Physical<br>Systems</div>
+    </div>
+  </div>
+
+  <div class="branch b7" id="b7" onclick="showDetail('b7')">
+    <div class="branch-node">
+      <div class="b-icon">🏛️</div>
+      <div class="b-title">Security Eng.<br>&amp; Governance</div>
+    </div>
+  </div>
+
+  <!-- LEAVES per branch (positioned by JS) -->
+  <!-- b1 leaves -->
+  <div class="leaf b1" id="l1a"><div class="leaf-inner">Guidance as a Service</div></div>
+  <div class="leaf b1" id="l1b"><div class="leaf-inner">In-IDE MCP Servers</div></div>
+  <div class="leaf b1" id="l1c"><div class="leaf-inner">Post-Gen Vetting (SAST)</div></div>
+  <!-- b2 leaves -->
+  <div class="leaf b2" id="l2a"><div class="leaf-inner">AI Copilots (Orbie)</div></div>
+  <div class="leaf b2" id="l2b"><div class="leaf-inner">Intent Attribution</div></div>
+  <div class="leaf b2" id="l2c"><div class="leaf-inner">Rogue GenAI Detection</div></div>
+  <div class="leaf b2" id="l2d"><div class="leaf-inner">Deception & Sinkholing</div></div>
+  <!-- b3 leaves -->
+  <div class="leaf b3" id="l3a"><div class="leaf-inner">Agentic SOC Orchestration</div></div>
+  <div class="leaf b3" id="l3b"><div class="leaf-inner">Forensic Data Analysis</div></div>
+  <div class="leaf b3" id="l3c"><div class="leaf-inner">Victimology Mapping</div></div>
+  <!-- b4 leaves -->
+  <div class="leaf b4" id="l4a"><div class="leaf-inner">Agentic Identity Auth</div></div>
+  <div class="leaf b4" id="l4b"><div class="leaf-inner">Capability Warrants</div></div>
+  <!-- b5 leaves -->
+  <div class="leaf b5" id="l5a"><div class="leaf-inner">TEEs (SGX / TDX)</div></div>
+  <div class="leaf b5" id="l5b"><div class="leaf-inner">Encrypted HW Links</div></div>
+  <div class="leaf b5" id="l5c"><div class="leaf-inner">Remote Attestation</div></div>
+  <!-- b6 leaves -->
+  <div class="leaf b6" id="l6a"><div class="leaf-inner">Runtime Safety</div></div>
+  <div class="leaf b6" id="l6b"><div class="leaf-inner">Hardware Fail-safes</div></div>
+  <div class="leaf b6" id="l6c"><div class="leaf-inner">Human-in-the-Loop</div></div>
+  <!-- b7 leaves -->
+  <div class="leaf b7" id="l7a"><div class="leaf-inner">AI OS / Marketplace</div></div>
+  <div class="leaf b7" id="l7b"><div class="leaf-inner">Sandboxing Controls</div></div>
+  <div class="leaf b7" id="l7c"><div class="leaf-inner">Maturity Matrices</div></div>
+</div>
+
+<!-- Detail panel -->
+<div id="detail-panel">
+  <button id="close-btn" onclick="closeDetail()">✕ close</button>
+  <div class="panel-header">
+    <span class="panel-icon" id="panel-icon"></span>
+    <span class="panel-title" id="panel-title"></span>
+  </div>
+  <div class="panel-body" id="panel-body"></div>
+</div>
+
+<script>
+const W = () => window.innerWidth, H = () => window.innerHeight;
+
+// Branch angles (radians) and radii
+const branches = [
+  { id: 'b1', angle: -Math.PI/2 - Math.PI/7 * 3, r: 0.3 },
+  { id: 'b2', angle: -Math.PI/2 - Math.PI/7 * 1, r: 0.3 },
+  { id: 'b3', angle: -Math.PI/2 + Math.PI/7 * 1, r: 0.3 },
+  { id: 'b4', angle: -Math.PI/2 + Math.PI/7 * 3, r: 0.3 },
+  { id: 'b5', angle: Math.PI/2 + Math.PI/7 * 1.5, r: 0.3 },
+  { id: 'b6', angle: Math.PI/2 - Math.PI/7 * 0, r: 0.3 },
+  { id: 'b7', angle: Math.PI/2 - Math.PI/7 * 1.5, r: 0.3 },
+];
+
+// Leaves: [branchId, leafId, angle offset from branch, leaf radius]
+const leaveDefs = [
+  ['b1','l1a', -0.45, 0.155], ['b1','l1b', 0, 0.18], ['b1','l1c', 0.45, 0.155],
+  ['b2','l2a', -0.55, 0.15], ['b2','l2b', -0.2, 0.18], ['b2','l2c', 0.2, 0.18], ['b2','l2d', 0.55, 0.15],
+  ['b3','l3a', -0.4, 0.16], ['b3','l3b', 0.05, 0.185], ['b3','l3c', 0.45, 0.16],
+  ['b4','l4a', -0.3, 0.17], ['b4','l4b', 0.3, 0.17],
+  ['b5','l5a', -0.45, 0.155], ['b5','l5b', 0, 0.18], ['b5','l5c', 0.45, 0.155],
+  ['b6','l6a', -0.45, 0.155], ['b6','l6b', 0, 0.18], ['b6','l6c', 0.45, 0.155],
+  ['b7','l7a', -0.45, 0.155], ['b7','l7b', 0, 0.18], ['b7','l7c', 0.45, 0.155],
+];
+
+let positions = {};
+
+function layout() {
+  const cx = W()/2, cy = H()/2;
+  const rBranch = Math.min(W(), H()) * 0.285;
+  const rLeaf = Math.min(W(), H()) * 0.46;
+
+  positions['center'] = {x: cx, y: cy};
+
+  branches.forEach(b => {
+    const x = cx + Math.cos(b.angle) * rBranch;
+    const y = cy + Math.sin(b.angle) * rBranch;
+    positions[b.id] = {x, y, angle: b.angle};
+    const el = document.getElementById(b.id);
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+  });
+
+  leaveDefs.forEach(([bid, lid, aOff, rFactor]) => {
+    const bAngle = positions[bid].angle;
+    const a = bAngle + aOff;
+    const r = Math.min(W(), H()) * (rFactor + 0.14);
+    const x = cx + Math.cos(a) * r;
+    const y = cy + Math.sin(a) * r;
+    positions[lid] = {x, y};
+    const el = document.getElementById(lid);
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+  });
+
+  drawLines();
+}
+
+const branchColors = {b1:'#ff4d6d',b2:'#ffd60a',b3:'#06ffa5',b4:'#7b61ff',b5:'#ff9a3c',b6:'#00cfff',b7:'#ff61b6'};
+const leafBranch = {l1a:'b1',l1b:'b1',l1c:'b1',l2a:'b2',l2b:'b2',l2c:'b2',l2d:'b2',l3a:'b3',l3b:'b3',l3c:'b3',l4a:'b4',l4b:'b4',l5a:'b5',l5b:'b5',l5c:'b5',l6a:'b6',l6b:'b6',l6c:'b6',l7a:'b7',l7b:'b7',l7c:'b7'};
+
+function drawLines() {
+  const svg = document.getElementById('lines-svg');
+  svg.innerHTML = '';
+  const cx = W()/2, cy = H()/2;
+
+  // center to branches
+  branches.forEach(b => {
+    const bp = positions[b.id];
+    const col = branchColors[b.id];
+    const line = makeLine(cx, cy, bp.x, bp.y, col, 1.5, '8,6');
+    svg.appendChild(line);
+  });
+
+  // branches to leaves
+  leaveDefs.forEach(([bid, lid]) => {
+    const bp = positions[bid];
+    const lp = positions[lid];
+    const col = branchColors[bid];
+    const line = makeLine(bp.x, bp.y, lp.x, lp.y, col, 0.8, '4,5');
+    svg.appendChild(line);
+  });
+}
+
+function makeLine(x1,y1,x2,y2,color,width,dash) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg','line');
+  el.setAttribute('x1',x1); el.setAttribute('y1',y1);
+  el.setAttribute('x2',x2); el.setAttribute('y2',y2);
+  el.setAttribute('stroke', color);
+  el.setAttribute('stroke-width', width);
+  el.setAttribute('stroke-dasharray', dash);
+  el.setAttribute('opacity', '0.5');
+  return el;
+}
+
+// Background canvas
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function initCanvas() {
+  canvas.width = W(); canvas.height = H();
+  particles = Array.from({length: 60}, () => ({
+    x: Math.random() * W(), y: Math.random() * H(),
+    vx: (Math.random()-0.5)*0.3, vy: (Math.random()-0.5)*0.3,
+    size: Math.random()*1.5+0.5, alpha: Math.random()*0.4+0.1
+  }));
+}
+
+function drawBg() {
+  ctx.clearRect(0,0,W(),H());
+  // grid
+  ctx.strokeStyle = 'rgba(0,200,255,0.04)';
+  ctx.lineWidth = 1;
+  for(let x=0;x<W();x+=50){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H());ctx.stroke();}
+  for(let y=0;y<H();y+=50){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W(),y);ctx.stroke();}
+  // particles
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if(p.x<0) p.x=W(); if(p.x>W()) p.x=0;
+    if(p.y<0) p.y=H(); if(p.y>H()) p.y=0;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+    ctx.fillStyle = `rgba(0,200,255,${p.alpha})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawBg);
+}
+
+// Detail panel data
+const details = {
+  center: {
+    icon: '🧠',
+    title: 'The AI-Driven Cybersecurity Ecosystem',
+    color: '#00e5ff',
+    body: `<p>A comprehensive framework spanning <strong>7 interconnected domains</strong> where AI is actively leveraged, secured, and managed. From application-layer protections to physical-world governance, this ecosystem represents the convergence of machine intelligence and modern security engineering.</p><ul style="margin-top:10px"><li>Click any branch node to explore its domain</li><li>Each domain contains multiple active research &amp; tooling areas</li></ul>`
+  },
+  b1: {
+    icon:'🛡️', title:'Application Security & Secure Development', color:'#ff4d6d',
+    body:`<ul><li><strong>Security Guidance as a Service:</strong> Centralized AI knowledge bases serving automated threat modeling, curated policy alignments, and vulnerability remediation directly to developers.</li><li><strong>In-IDE Enforcement (MCP Servers):</strong> Context-aware agents generating secure code patterns (safe SQL, response headers) on demand within developer IDEs.</li><li><strong>Post-Generation Vetting:</strong> Automated feedback loops running secrets scanning, SAST, and unit tests on AI-generated code before merging.</li></ul>`
+  },
+  b2: {
+    icon:'🎯', title:'Threat Hunting & Detection Engineering', color:'#ffd60a',
+    body:`<ul><li><strong>AI Copilots (Orbie, Datadog):</strong> Automatically generating queries, analyzing logs, and pivoting across data sources to rule out false positives.</li><li><strong>Intent Attribution:</strong> Using OpenTelemetry gen_ai.* conventions to bridge EDR &amp; APM — tracking token usage, prompt submissions, and agent boundaries.</li><li><strong>Rogue GenAI Detection:</strong> Rules catching AI agents writing to hidden paths, accessing credential databases, or making unusual DNS requests (webhook exfiltration).</li><li><strong>Deception &amp; Sinkholing:</strong> AI autonomously building assessment environments to monitor malware campaigns in real-time.</li></ul>`
+  },
+  b3: {
+    icon:'🚨', title:'Incident Response & Data Forensics', color:'#06ffa5',
+    body:`<ul><li><strong>Agentic SOC Orchestration:</strong> Multi-agent systems with designated "Triaging Agents" and "SOC Lead Investigation Agents" dividing alert triage and investigation workflows.</li><li><strong>Forensic Data Analysis:</strong> Reasoning models (like Claude) rapidly analyzing massive data leaks, deduplicating compromised machine fingerprints, and identifying victim organizations.</li><li><strong>Victimology Mapping:</strong> Identifying GitHub organizations, cloud providers, and infrastructure through AI-accelerated forensic analysis.</li></ul>`
+  },
+  b4: {
+    icon:'🔐', title:'Identity & Access Management (IAM)', color:'#7b61ff',
+    body:`<ul><li><strong>Agentic Identity:</strong> Shifting from "who is the user?" to authenticating the agent itself — who tasked it, what code is it running, under what authority?</li><li><strong>Capability-Based Warrants:</strong> Replacing broad ambient access with ephemeral, cryptographically bound warrants that strictly scope agent capabilities (e.g., only <code>read_logs()</code>) to prevent prompt injection exploitation.</li></ul>`
+  },
+  b5: {
+    icon:'🏗️', title:'Infrastructure & Hardware Security (Confidential AI)', color:'#ff9a3c',
+    body:`<ul><li><strong>Trusted Execution Environments:</strong> Intel TDX (VM Isolation) and Intel SGX (Application Enclave) protecting sensitive AI training data and proprietary models from compromised hypervisors or malicious insiders.</li><li><strong>Encrypted Hardware Connections:</strong> Intel TDX Connect maintaining high-performance encrypted pathways between CPUs and GPUs during AI inference and training.</li><li><strong>Remote Attestation:</strong> Independent trust authorities cryptographically verifying AI workloads are running in untampered enclaves before releasing sensitive data or API keys.</li></ul>`
+  },
+  b6: {
+    icon:'🦾', title:'Cyber-Physical Systems (Kinetic Risk)', color:'#00cfff',
+    body:`<ul><li><strong>Physical AI Governance:</strong> Security for AI systems interacting with the physical world — robots, autonomous vehicles.</li><li><strong>Runtime Safety Mechanisms:</strong> Strict safety envelopes enforcing behavioral boundaries during live operation.</li><li><strong>Hardware-Enforced Fail-safes:</strong> Physical kill switches and circuit-level controls preventing irreversible damage.</li><li><strong>Human-in-the-Loop (HITL):</strong> Mandatory auditing checkpoints ensuring human oversight for high-stakes physical actions.</li></ul>`
+  },
+  b7: {
+    icon:'🏛️', title:'Security Engineering & AI Governance', color:'#ff61b6',
+    body:`<ul><li><strong>The "Operating System" Model:</strong> Curated internal AI marketplaces, skill repositories, and strict sandboxing — reducing "footguns" and uncontrolled AI use within engineering orgs.</li><li><strong>Maturity Matrices:</strong> Tracking AI adoption safety by categorizing users from "Not Engaged" to "Transformative," with measurable capability improvements bound by clear usage policies.</li><li><strong>AI Governance Framework:</strong> Structured accountability ensuring that as engineers leverage AI for code or vulnerability analysis, outcomes remain auditable and policy-compliant.</li></ul>`
+  }
+};
+
+function showDetail(id) {
+  const d = details[id];
+  if(!d) return;
+  document.getElementById('panel-icon').textContent = d.icon;
+  document.getElementById('panel-title').textContent = d.title;
+  document.getElementById('panel-title').style.color = d.color;
+  document.getElementById('panel-body').innerHTML = d.body;
+  document.getElementById('detail-panel').classList.add('visible');
+}
+
+function closeDetail() {
+  document.getElementById('detail-panel').classList.remove('visible');
+}
+
+window.addEventListener('resize', () => { initCanvas(); layout(); });
+
+initCanvas();
+drawBg();
+layout();
+</script>
+</body>
+</html>
